@@ -149,6 +149,17 @@
                         } else {
                             rowStr += "Not Nft Contract<br />";
                         }
+                    } else if (getFunctionName(fnSelector) === "Extract") {
+                      if (tx.to.toLowerCase() === NftContractAddr) {
+                            if (tx.from === _account) {
+                                rowStr += "Success<br />";
+                                check = true;
+                            } else {
+                                rowStr += "Account not Match: " + tx.from + "<br />";
+                            }
+                        } else {
+                            rowStr += "Not Nft Contract<br />";
+                        }
                     } else if (getFunctionName(fnSelector) === "tradeNFT") {
                         if (tx.to.toLowerCase() === MarketContractAddr) {
                             if (quest === "Buy") {
@@ -229,6 +240,8 @@
                     return "OpenBox";
                 case "0xd4828f6f":      // Box - buy(mint)
                     return "BuyBox";
+                case "0x601afa84":
+                  return "Extract";
                 default:
                     return "not found function";
             }
@@ -273,6 +286,7 @@
             <option value="Sell">Sell</option>
             <option value="UnSealing">UnSealing</option>
             <option value="Sealing">Sealing</option>
+            <option value="Extract">Extract</option>
           </select>
         </div>
       </div>
