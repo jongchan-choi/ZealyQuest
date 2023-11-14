@@ -140,7 +140,7 @@
                 if (getFunctionName(fnSelector) === quest || getFunctionName(fnSelector) === "tradeNFT") {
                     if (quest === "Mint") {
                         if (tx.to.toLowerCase() === NftContractAddr) {
-                            if (tx.from === _account) {
+                            if (tx.from.toLowerCase() === _account.toLowerCase()) {
                                 rowStr += "Success<br />";
                                 check = true;
                             } else {
@@ -151,7 +151,7 @@
                         }
                     } else if (getFunctionName(fnSelector) === "Extract") {
                       if (tx.to.toLowerCase() === NftContractAddr) {
-                            if (tx.from === _account) {
+                            if (tx.from.toLowerCase() === _account.toLowerCase()) {
                                 rowStr += "Success<br />";
                                 check = true;
                             } else {
@@ -188,7 +188,7 @@
                     } else if (quest === "UnSealing" || quest === "Sealing") {
                         console.log("ssss", tx.to.toLowerCase() === NftContractAddr);
                         if (tx.to.toLowerCase() === NftContractAddr) {
-                            if (tx.from === _account) {
+                            if (tx.from.toLowerCase() === _account.toLowerCase()) {
                                 rowStr += "Success<br />";
                                 check = true;
                             } else {
