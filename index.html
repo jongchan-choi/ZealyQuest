@@ -132,11 +132,23 @@
             
             for (let i = 0; i < arrTxid.length; i++) {
                 var tx = await web3.eth.getTransaction(arrTxid[i]);                
+                
+                if (tx === null || tx.input.length < 10) {
+                  alert('wrong wxid');
+
+                  if (i === 0) {
+                    $("#txtHash1").focus();                    
+                  } else {
+                    $("#txtHash2").focus();
+                  }
+
+                  return;
+                }
+
                 var fnSelector = tx.input.substring(0, 10);
                 var check = false;
                 var rowStr = "";
-                console.log(getFunctionName(fnSelector), quest);
-
+                
                 if (getFunctionName(fnSelector) === quest || getFunctionName(fnSelector) === "tradeNFT") {
                     if (quest === "Mint") {
                         if (tx.to.toLowerCase() === NftContractAddr) {
@@ -186,7 +198,6 @@
                             rowStr += "Not Market Contract<br />";
                         }
                     } else if (quest === "UnSealing" || quest === "Sealing") {
-                        console.log("ssss", tx.to.toLowerCase() === NftContractAddr);
                         if (tx.to.toLowerCase() === NftContractAddr) {
                             if (tx.from.toLowerCase() === _account.toLowerCase()) {
                                 rowStr += "Success<br />";
@@ -207,8 +218,6 @@
                 }
 
                 rowStr += `<a href='https://bscscan.com/tx/${tx.hash}' target='_blank'>scan</a><br/><br/>`;
-                console.log(check);
-
                 result += rowStr;
             }
 
@@ -270,7 +279,7 @@
             type="text"
             id="txtAddress"
             name="txtAddress"
-            value=""
+            value="0x5367277ff2444c6e5607593395ef3f73Db1610AA"
             placeholder="User address.."
           />
         </div>
@@ -300,6 +309,7 @@
             id="txtHash1"
             name="txtHash1"
             placeholder="Search Hash"
+            value="0x927d59e2826b30d1975e6a930ccc91cb6f4a6cd6d283bad400f3c33ec8417a38"
           />
         </div>
       </div>
@@ -313,6 +323,7 @@
             id="txtHash2"
             name="txtHash2"
             placeholder="Search Hash"
+            value="0x927d59e2826b30d1975e6a930ccc91cb6f4a6cd6d283bad400f3c33ec8417a31"
           />
         </div>
       </div>
