@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: vertical;
+      }
+
+      label {
+        padding: 12px 12px 12px 0;
+        display: inline-block;
+      }
+
+      input[type="button"] {
+        background-color: #04aa6d;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        align-items: center;
+      }
+
+      input[type="button"]:hover {
+        background-color: #45a049;
+      }
+
+      .container {
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        padding: 20px;
+      }
+
+      .col-25 {
+        float: left;
+        width: 25%;
+        margin-top: 6px;
+      }
+
+      .col-75 {
+        float: left;
+        width: 75%;
+        margin-top: 6px;
+      }
+
+      /* Clear floats after the columns */
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      /* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
+      @media screen and (max-width: 600px) {
+        .col-25,
+        .col-75,
+        input[type="submit"] {
+          width: 100%;
+          margin-top: 0;
+        }
+      }
+
+      body {
+        font-family: Verdana, Geneva, Arial, sans-serif;
+      }
+    </style>
+
+    <script type="text/javascript" src="web3.min.js"></script>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+    <script type="text/javascript">
+        var web3;
+        var NftContractAddr = "0x0d4970D42cF9b3Fa7f146976A02334CdB8DA1782".toLowerCase();
+        var MarketContractAddr = "0x0e37943581489F7771981bb5cA882b474d0D5aD2".toLowerCase();
+        var BoxContractAddr = "0x3a78dB8f328B2F3C055C3819181e56Aa59B6EAd4".toLowerCase();
+        var KidContractAddr = "0xe04a18424D927Ad72D193a1B3403394D75019527".toLowerCase();
+        var BkidContractAddr = "0xacC74880292220142AE3C97F48F663E78B21679A".toLowerCase();
+
+        $(document).ready(function () {
+            web3 = new Web3(
+            new Web3.providers.HttpProvider("https://bsc-dataseed1.bnbchain.org")
+            );
+            /* Get Node Info */
+            web3.eth.getNodeInfo(function (error, result) {
+            if (error) {
+                console.log("error", error);
+            } else {
+                console.log("result", result);
+                $("#NodeInfo").val(result);
+            }
+            });
+
+            $("#divResult").hide();
+        });
+
+        async function checkValue() {
+            var quest = $("#quest").val();
+            var result = "";
+            var _account = $("#txtAddress").val();            
+
+            if (!web3.utils.isAddress(_account)) {
+                alert("wrong address.");
+                $("#txtAddress").focus();
+                return;
+            }
+
+            if ($("#txtHash1").val().length !== 66) {
+                alert("wrong txid.");
+                $("#txtHash1").focus();
+                return;
+            }
+
+            if ($("#txtHash2").val().length !== 66) {
+                alert("wrong txid.");
+                $("#txtHash2").focus();
+                return;
+            }
+
+            result += `balance: ${web3.utils.fromWei(await web3.eth.getBalance(_account), "ether")} BSC <br /><br />`;
+            var arrTxid = [ $("#txtHash1").val(), $("#txtHash2").val()];
+            
+            for (let i = 0; i < arrTxid.length; i++) {
+                var tx = await web3.eth.getTransaction(arrTxid[i]);                
+                var fnSelector = tx.input.substring(0, 10);
+                var check = false;
+                var rowStr = "";
+                console.log(getFunctionName(fnSelector), quest);
+
+                if (getFunctionName(fnSelector) === quest || getFunctionName(fnSelector) === "tradeNFT") {
+                    if (quest === "Mint") {
+                        if (tx.to.toLowerCase() === NftContractAddr) {
+                            if (tx.from === _account) {
+                                rowStr += "Success<br />";
+                                check = true;
+                            } else {
+                                rowStr += "Account not Match: " + tx.from + "<br />";
+                            }
+                        } else {
+                            rowStr += "Not Nft Contract<br />";
+                        }
+                    } else if (getFunctionName(fnSelector) === "tradeNFT") {
+                        if (tx.to.toLowerCase() === MarketContractAddr) {
+                            if (quest === "Buy") {
+                                if (tx.from.toLowerCase() === _account.toLowerCase()) {
+                                    rowStr += "Success<br />";
+                                    check = true;
+                                } else {
+                                    rowStr += `Fail: buyer = ${tx.to}<br/>`;
+                                }
+                            } else if (quest === "Sell") {
+                                console.log("-------------------------");
+                                var data = tx.input.substring(10, 74);  // 첫번째  파라미터
+                                data = `0x${data.right(40)}`;
+                                if (data.toLowerCase() === _account.toLowerCase()) {
+                                    rowStr += "Success<br />";
+                                    check = true;
+                                } else {
+                                    rowStr += "Account not Match: " + data + "<br />";
+                                }
+                            } else {
+                                rowStr += "Not Match Function<br />";    
+                            }
+                        } else {
+                            rowStr += "Not Market Contract<br />";
+                        }
+                    } else if (quest === "UnSealing" || quest === "Sealing") {
+                        console.log("ssss", tx.to.toLowerCase() === NftContractAddr);
+                        if (tx.to.toLowerCase() === NftContractAddr) {
+                            if (tx.from === _account) {
+                                rowStr += "Success<br />";
+                                check = true;
+                            } else {
+                                rowStr += "Account not Match: " + tx.from + "<br />";
+                            }
+                        } else {
+                            rowStr += "Not Nft Contract<br />";
+                        }
+                    }
+                } else {
+                    rowStr += "Not Match Function: " + getFunctionName(fnSelector) + "<br />";
+                }
+
+                if (!check) {
+                    rowStr = `<font color='red'>${rowStr}</font>`;                    
+                }
+
+                rowStr += `<a href='https://bscscan.com/tx/${tx.hash}' target='_blank'>scan</a><br/><br/>`;
+                console.log(check);
+
+                result += rowStr;
+            }
+
+            $("#lblResult").html(result);
+            $("#divResult").show();
+        }
+
+        function getFunctionName(fcSelector) {
+            switch (fcSelector.toLowerCase())
+            {
+                case "0x40c10f19" :     // ERC20
+                    return "mint-erc20";
+                case "0xa9059cbb":      // ERC20
+                    return "transfer-erc20";
+                case "0xc51f52ef" :     // Kingdom Hero NFT - mint
+                    return "Mint";
+                case "0xdd467064":      // Kingdom Hero NFT - lock
+                    return "UnSealing";
+                // case "0x601afa84":      // Kingdom Hero NFT - unlock
+                case "0x2a23ea2c":      // Kingdom Hero NFT - UnlockAndSetTokenURI
+                    return "Sealing";
+                case "0xb88d4fde":      // Kingdom Hero NFT - trnsfer
+                    return "safeTransferFrom";
+                case "0xf9ca1789":      // Market - trade
+                    return "tradeNFT";
+                case "0xc5f6a2e1":      // Market - cancel
+                    return "expireSignature";
+                case "0xb7387e66":      // Box - open
+                    return "OpenBox";
+                case "0xd4828f6f":      // Box - buy(mint)
+                    return "BuyBox";
+                default:
+                    return "not found function";
+            }
+        }
+
+        String.prototype.right = function(length){
+            if(this.length <= length){
+                return this;
+            } else {
+                return this.substring(this.length - length, this.length);
+            }
+        }
+      
+    </script>
+  </head>
+  <body>
+    <h2>Kingdomstory SCAN</h2>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-25">
+          <label for="fname">Address</label>
+        </div>
+        <div class="col-75">
+          <input
+            type="text"
+            id="txtAddress"
+            name="txtAddress"
+            value="0xd5a6160D1Ff98559a36AbF177F45524947555AF8"
+            placeholder="User address.."
+          />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-25">
+          <label for="country">Quest</label>
+        </div>
+        <div class="col-75">
+          <select id="quest" name="quest">
+            <option value="Mint">Mint</option>
+            <option value="Buy">Buy</option>
+            <option value="Sell">Sell</option>
+            <option value="UnSealing">UnSealing</option>
+            <option value="Sealing">Sealing</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-25">
+          <label for="lname">tx hash1</label>
+        </div>
+        <div class="col-75">
+          <input
+            type="text"
+            id="txtHash1"
+            name="txtHash1"
+            placeholder="Search Hash"
+          />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-25">
+          <label for="lname">tx hash2</label>
+        </div>
+        <div class="col-75">
+          <input
+            type="text"
+            id="txtHash2"
+            name="txtHash2"
+            placeholder="Search Hash"
+          />
+        </div>
+      </div>
+      <div
+        class="row"
+        style="width: 100%; display: flex; justify-content: center"
+      >
+        <input type="button" onclick="checkValue()" value="check" />
+      </div>
+      
+      <div id="divResult" class="row" style="height: 200px">
+        <hr />        
+        <div class="col-25">
+          <label for="subject">Result</label>
+        </div>
+        <div class="col-75">
+          <span id="lblResult">hahahaha</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
